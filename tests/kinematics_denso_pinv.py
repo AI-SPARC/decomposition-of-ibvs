@@ -7,12 +7,8 @@ import sys
 sys.path.append("..")
 
 from denso_simulation import DensoVP6242Simulation
-from utils import quat2taitbryan
 
-from noise import NoiseProfiler, NoiseType
-
-TS = 0.05
-GAIN = 0.1
+GAIN = 0.5
 T_MAX = 50
 
 print("Instantiating robot")
@@ -37,7 +33,12 @@ input()
 
 k = 0
 
+itae = 0
+t_old = 0
+
 while (t := robot.sim.getSimulationTime()) < T_MAX:
+
+    dt = t - t_old
 
     # Compute error
     X_m = robot.computePose(recalculate_fkine=True)
@@ -54,7 +55,7 @@ while (t := robot.sim.getSimulationTime()) < T_MAX:
     # Inverse Kinematics Control Law
     dq = GAIN * np.linalg.pinv(J) @ error.reshape(3, 1)
 
-    new_q = robot.getJointsPos() + dq.ravel() * TS
+    new_q = robot.getJointsPos() + dq.ravel() * dt
 
     k += 1
 
@@ -64,8 +65,13 @@ while (t := robot.sim.getSimulationTime()) < T_MAX:
     print(error)
     print('-------')
 
+    itae += t * np.linalg.norm(error) * dt
+    t_old = t
+
     # Send theta command to robot
     robot.setJointsPos(new_q)
 
     # next_step
     robot.step()
+
+print(itae)
