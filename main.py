@@ -134,9 +134,13 @@ for rho in rho_list:
         if change_q_start:
             # With these little changes, the robot camera still starts with the features in the view
             random_values = random_prof.getNoise() # Get uniform random values from 0 to 1
-            q[0] = q_start[0] + 2 * (random_values[0] - 1) * (np.pi/18) # The first joint goes from -10 to 10 degrees
-            q[1] = q_start[1] + 2 * (random_values[1] - 1) * (np.pi/9) # While the second joint goes from -20 to 20 degrees
-        
+            q[0] = q_start[0] + 2 * (random_values[0] - 1) * (np.pi/9)
+            q[1] = q_start[1] + 2 * (random_values[1] - 1) * (np.pi/9)
+            q[2] = q_start[2] + 2 * (random_values[2] - 1) * (np.pi/9)
+            q[3] = q_start[3] + 2 * (random_values[3] - 1) * (np.pi/9)
+            q[4] = q_start[4] + 2 * (random_values[4] - 1) * (np.pi/9)
+            q[5] = q_start[5] + 2 * (random_values[5] - 1) * (np.pi/9)
+
         # Noise generation
         noise_prof = NoiseProfiler(num_features=len(desired_pos), noise_type=noise_type, seed=seed, logger=logger, noise_hold=noise_hold, noise_hold_cnt=int(noise_hold_time/dt) , noise_params=noise_params)
         if seed is not None:
