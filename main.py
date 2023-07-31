@@ -1,6 +1,6 @@
 from experiment import Experiment, Method, ExperimentStatus
 from noise import NoiseProfiler, NoiseType
-from ur10_simulation import UR10Simulation
+from denso_simulation import DensoVP6242Simulation
 import numpy as np
 import pandas as pd
 import time
@@ -53,9 +53,9 @@ with open("config.json", "r", encoding="utf-8") as config_file:
         dt = experiments_config["dt"]
         t_max = experiments_config["t_max"]
         epoch = experiments_config["epoch"]
-        ibvs_gain = experiments_config["ibvs_gain"]
+        gain = experiments_config["gain"]
         q_start = np.array(experiments_config["q_start"])
-        desired_f = np.array(experiments_config["desired_f"])
+        desired_pos = np.array(experiments_config["desired_pos"])
         visualization = experiments_config["visualization"]
         change_q_start = experiments_config["change_q_start"]
         experiment_seed = experiments_config["seed"]
@@ -119,7 +119,7 @@ experiment_success_cnt = 0
 experiment_fail_cnt = 0
 
 if change_q_start:
-    random_prof = NoiseProfiler(num_features=2, noise_type=NoiseType.UNIFORM, seed=experiment_seed, logger=logger)
+    random_prof = NoiseProfiler(num_features=6, noise_type=NoiseType.UNIFORM, seed=experiment_seed, logger=logger)
 
 # Preparing experiment queue
 for rho in rho_list:
@@ -138,18 +138,18 @@ for rho in rho_list:
             q[1] = q_start[1] + 2 * (random_values[1] - 1) * (np.pi/9) # While the second joint goes from -20 to 20 degrees
         
         # Noise generation
-        noise_prof = NoiseProfiler(num_features=len(desired_f), noise_type=noise_type, seed=seed, logger=logger, noise_hold=noise_hold, noise_hold_cnt=int(noise_hold_time/dt) , noise_params=noise_params)
+        noise_prof = NoiseProfiler(num_features=len(desired_pos), noise_type=noise_type, seed=seed, logger=logger, noise_hold=noise_hold, noise_hold_cnt=int(noise_hold_time/dt) , noise_params=noise_params)
         if seed is not None:
             seed = seed + 1
 
-        robot = UR10Simulation(logger=logger, visualization=visualization)
-        experiment = Experiment(q_start=q, desired_f=desired_f, noise_prof=noise_prof, t_s=dt, t_max=t_max, ibvs_gain=ibvs_gain, robot=robot, logger=logger, method=method, method_params=method_params)
+        robot = DensoVP6242Simulation(logger=logger, visualization=visualization)
+        experiment = Experiment(q_start=q, desired_pos=desired_pos, noise_prof=noise_prof, t_s=dt, t_max=t_max, gain=gain, robot=robot, logger=logger, method=method, method_params=method_params)
 
         logger.info("Experiment " + str(k+1) + " of " + str(len(rho_list)*epoch))
         logger.info("Noise params: " + str(noise_params))
         
         # Running experiment
-        status, t_log, error_log, q_log, f_log, desired_f_log, camera_log, noise_log, kernel_bw_log = experiment.run()
+        status, t_log, error_log, q_log, desired_pos_log, camera_log, noise_log = experiment.run()
 
         # Saving data
         logger.debug("Saving experiment data in csv")  
@@ -170,31 +170,12 @@ for rho in rho_list:
             'camera_roll': camera_log[:, 3],
             'camera_pitch': camera_log[:, 4],
             'camera_yaw': camera_log[:, 5],
-            'f_1': f_log[:, 0],
-            'f_2': f_log[:, 1],
-            'f_3': f_log[:, 2],
-            'f_4': f_log[:, 3],
-            'f_5': f_log[:, 4],
-            'f_6': f_log[:, 5],
-            'f_7': f_log[:, 6],
-            'f_8': f_log[:, 7],
-            'desired_f_1': desired_f_log[:, 0],
-            'desired_f_2': desired_f_log[:, 1],
-            'desired_f_3': desired_f_log[:, 2],
-            'desired_f_4': desired_f_log[:, 3],
-            'desired_f_5': desired_f_log[:, 4],
-            'desired_f_6': desired_f_log[:, 5],
-            'desired_f_7': desired_f_log[:, 6],
-            'desired_f_8': desired_f_log[:, 7],
+            'desired_pos_1': desired_pos_log[:, 0],
+            'desired_pos_2': desired_pos_log[:, 1],
+            'desired_pos_3': desired_pos_log[:, 2],
             'noise_1': noise_log[:, 0],
             'noise_2': noise_log[:, 1],
-            'noise_3': noise_log[:, 2],
-            'noise_4': noise_log[:, 3],
-            'noise_5': noise_log[:, 4],
-            'noise_6': noise_log[:, 5],
-            'noise_7': noise_log[:, 6],
-            'noise_8': noise_log[:, 7],
-            'kernel_bw': kernel_bw_log,
+            'noise_3': noise_log[:, 2]
         })
     
         dataframe.to_csv(os.path.join(directory_path, 'results.csv'), mode='a', index=False, header=file_header)

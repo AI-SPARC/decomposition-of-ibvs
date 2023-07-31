@@ -4,22 +4,18 @@
         "dt": 0.05, 
         "t_max": 15, 
         "epoch": 1000, 
-        "ibvs_gain": 0.2, 
-        "q_start": [0.0, 0.0, 1.96349541, 0.0, -1.57079633, 0], 
-        "desired_f": [149.0, 145.0, 125.0, 121.0, 101.0, 145.0, 125.0, 169.0], 
+        "gain": 0.1, 
+        "q_start": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
+        "desired_pos": [0.25, 0.0, 0.45], 
         "visualization": false, 
         "change_q_start": true, 
         "seed": 12345
     }, 
     "estimator": {
-        "method": "KF", 
+        "method": "JACOBIAN_PINV", 
         "estimator_params": {
-            "initial_guess": true, 
-            "kernel_bw": 0.1, 
-            "fpi_threshold": 0.1, 
-            "fpi_epoch_max": 1000, 
-            "annealing": true,
-            "estimate_Jinv": true
+            "initial_guess": false,
+            "estimate_Jinv": false
         }
     }, 
     "noise": {

@@ -109,6 +109,35 @@ class DensoVP6242Simulation():
         else:
             return self.T_0_6
 
+    def jacobian_position(self, recalculate_fkine=False):
+
+        T_0_6, T_0_5, T_0_4, T_0_3, T_0_2, T_0_1 = self.fkine(recalculate=recalculate_fkine, all_transforms=True)
+        
+        # Jacobian computation as shown in section 3.1.3 on Siciliano's Robotics book
+        z_0 = np.array([0, 0, 1])
+        z_1 = T_0_1[0:3, 2]
+        z_2 = T_0_2[0:3, 2]
+        z_3 = T_0_3[0:3, 2]
+        z_4 = T_0_4[0:3, 2]
+        z_5 = T_0_5[0:3, 2]
+
+        p_0 = np.array([0, 0, 0])
+        p_1 = T_0_1[0:3, -1]
+        p_2 = T_0_2[0:3, -1]
+        p_3 = T_0_3[0:3, -1]
+        p_4 = T_0_4[0:3, -1]
+        p_5 = T_0_5[0:3, -1]
+        p_e = T_0_6[0:3, -1]
+
+        J1 = np.cross(z_0, (p_e-p_0)).reshape(3,1)
+        J2 = np.cross(z_1, (p_e-p_1)).reshape(3,1)
+        J3 = np.cross(z_2, (p_e-p_2)).reshape(3,1)
+        J4 = np.cross(z_3, (p_e-p_3)).reshape(3,1)
+        J5 = np.cross(z_4, (p_e-p_4)).reshape(3,1)
+        J6 = np.cross(z_5, (p_e-p_5)).reshape(3,1)
+
+        return np.hstack([J1, J2, J3, J4, J5, J6])
+
     def jacobian(self, recalculate_fkine=False):
 
         T_0_6, T_0_5, T_0_4, T_0_3, T_0_2, T_0_1 = self.fkine(recalculate=recalculate_fkine, all_transforms=True)
