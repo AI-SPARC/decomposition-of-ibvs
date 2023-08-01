@@ -6,7 +6,8 @@ import logging
 class Method(Enum):
     JACOBIAN_PINV = 1
     JACOBIAN_SVD = 2
-    KF = 3
+    JACOBIAN_TRANSPOSE = 3
+    KF = 4
 
 class ExperimentStatus(Enum):
     SUCCESS = 0
@@ -55,6 +56,18 @@ class Experiment:
         # Main loop
         scale_matrix_t = np.array([[1,0,0],[0,1,0],[0,0,1],[0,0,0],[0,0,0],[0,0,0]])
         k = 0
+
+        '''
+        if self.method == Method.KF:
+            X = np.zeros((3 * 6, 1)) # For position, if orientation too, should chance the number 3
+            Z = np.zeros((3, 1))
+            H = np.zeros((3, 3 * 6))
+            P = np.eye(3 * 6)
+            K = np.zeros((3 * 6, 3))
+            Q = np.eye(3 * 6)
+            R = np.eye(3)
+        '''
+
         while (t := self.robot.sim.getSimulationTime()) < self.t_max:
             
             X_m = self.robot.computePose(recalculate_fkine=True)
@@ -69,8 +82,10 @@ class Experiment:
                 if self.method == Method.JACOBIAN_PINV:
                     dq = self.gain * np.linalg.pinv(J) @ error.reshape(3, 1)
                 elif self.method == Method.JACOBIAN_SVD:
-                    u, s, vh = np.linalg.svd(J)
-                    dq = self.gain * (vh.T @ scale_matrix_t @ u.T) @ error.reshape(3, 1)
+                    u, _, vt = np.linalg.svd(J)
+                    dq = self.gain * (vt.T @ scale_matrix_t @ u.T) @ error.reshape(3, 1)
+                elif self.method == Method.JACOBIAN_TRANSPOSE:
+                    dq = self.gain * J.T @ error.reshape(3, 1)
             except:
                 experiment_status = ExperimentStatus.FAIL
                 self.logger.error('Experiment failed')
